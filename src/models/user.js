@@ -54,7 +54,6 @@ UserSchema.pre('save', async function(next) {
 
 UserSchema.methods.generatePasswordHash = async function() {
   const saltRounds = 10;
-  console.log('encrypting password');
   return await bcrypt.hash(this.password, saltRounds);
 };
 

@@ -24,9 +24,12 @@ export default {
         return await models.User.find();
       },
     ),
-    user: async (parent, { id }, { models }) => {
-      return await models.User.findById(id);
-    },
+    user: combineResolvers(
+      isAdmin,
+      async (parent, { id }, { models }) => {
+        return await models.User.findById(id);
+      },
+    ),
     me: async (parent, args, { models, me }) => {
       if (!me) {
         return null;
@@ -179,7 +182,7 @@ export default {
   },
 
   User: {
-    userSettings: async (user, args, { models }) => {
+    userSettings: async (user, { _ }, { models }) => {
       const settings = await models.UserSettings.findOne({
         userId: user.id,
       });

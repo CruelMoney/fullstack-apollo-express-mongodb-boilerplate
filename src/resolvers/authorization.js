@@ -1,8 +1,14 @@
 import { ForbiddenError } from 'apollo-server';
 import { combineResolvers, skip } from 'graphql-resolvers';
 
-export const isAuthenticated = (parent, args, { me }) =>
-  me ? skip : new ForbiddenError('Not authenticated as user.');
+export const isAuthenticated = (parent, args, { me }) => {
+  if (!me) {
+    throw new ForbiddenError('Not authenticated as user.');
+  } else if (!me.emailVerified) {
+    throw new ForbiddenError('Email not verified.');
+  }
+  return skip;
+};
 
 export const isAdmin = combineResolvers(
   isAuthenticated,
