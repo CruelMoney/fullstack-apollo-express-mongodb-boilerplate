@@ -5,7 +5,7 @@ import {
   UserInputError,
   ApolloError,
 } from 'apollo-server';
-
+import * as emailService from '../services/emailService';
 import { isAdmin, isAuthenticated } from './authorization';
 import { languages } from '../constants';
 
@@ -59,6 +59,13 @@ export default {
       await settings.save();
       await user.save();
 
+      const verifyEmailToken = await user.generateEmailVerificationToken();
+
+      emailService.sendVerificationEmail({
+        email,
+        token: verifyEmailToken,
+      });
+
       return { token: createToken(user, secret, '1y') };
     },
 
@@ -70,19 +77,17 @@ export default {
       const user = await models.User.findByLogin(login);
 
       if (!user) {
-        throw new UserInputError(
-          'Ingen bruger fundet med givne initialer.',
-        );
+        throw new UserInputError('User not found.');
       }
 
       const isValid = await user.validatePassword(password);
 
       if (!isValid) {
-        throw new AuthenticationError('Ugyldigt password.');
+        throw new AuthenticationError('Invalid password.');
       }
 
       if (!user.emailVerified) {
-        throw new AuthenticationError('Email er ikke bekræftet.');
+        throw new AuthenticationError('Email not verified.');
       }
 
       return { token: createToken(user, secret, '1y') };
@@ -121,7 +126,7 @@ export default {
       { emailVerificationToken },
       { models },
     ) => {
-      const user = await models.user.findByToken(
+      const user = await models.User.findByToken(
         emailVerificationToken,
       );
       if (!user) {
@@ -142,7 +147,7 @@ export default {
       { passwordResetToken, newPassword },
       { models },
     ) => {
-      const user = await models.user.findByToken(passwordResetToken);
+      const user = await models.User.findByToken(passwordResetToken);
       if (!user) {
         throw new AuthenticationError('User not found');
       }
@@ -153,6 +158,21 @@ export default {
 
       user.password = newPassword;
       await user.save();
+
+      return true;
+    },
+
+    requestPasswordReset: async (parent, { email }, { models }) => {
+      const user = await models.user.findByLogin(email);
+      if (!user) {
+        throw new UserInputError('User not found.');
+      }
+
+      const resetToken = await user.generatePasswordResetToken();
+      await emailService.sendPasswordResetEmail({
+        email,
+        token: resetToken,
+      });
 
       return true;
     },

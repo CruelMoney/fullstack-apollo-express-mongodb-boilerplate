@@ -9,13 +9,12 @@ const UserSchema = new mongoose.Schema({
     type: String,
     unique: true,
     required: true,
-    validate: [isEmail, 'Email er ikke gyldig.'],
+    validate: [isEmail, 'Email not valid.'],
   },
   password: {
     type: String,
-    required: [true, 'Password skal udfyldes.'],
+    required: true,
     minlength: [3, 'Password skal være på minimum 3 bogstaver.'],
-    maxlength: [42, 'Password kan maks være på 42 bogstaver.'],
   },
   role: {
     type: String,
@@ -47,12 +46,15 @@ UserSchema.statics.findByToken = async function(token) {
   }
 };
 
-UserSchema.pre('save', async function() {
+UserSchema.pre('save', async function(next) {
+  const user = this;
+  if (!user.isModified('password')) return next();
   this.password = await this.generatePasswordHash();
 });
 
 UserSchema.methods.generatePasswordHash = async function() {
   const saltRounds = 10;
+  console.log('encrypting password');
   return await bcrypt.hash(this.password, saltRounds);
 };
 
