@@ -2,6 +2,8 @@ import mongoose from 'mongoose';
 
 import User from './user';
 import Message from './message';
+import UserSettings from './userSettings';
+
 /**
  * @param {string} [dbUrl]
  */
@@ -27,7 +29,7 @@ const connectDb = dbUrl => {
   }
 };
 
-const models = { User, Message };
+const models = { User, Message, UserSettings };
 
 export { connectDb };
 

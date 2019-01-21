@@ -19,12 +19,11 @@ describe('users', () => {
   describe('user(id: String!): User', () => {
     it('returns a user when user can be found', async () => {
       const firstUser = users[0];
-      expect(firstUser.username).to.eql('rwieruch');
+      expect(firstUser.email).to.eql('rwieruch');
       const expectedResult = {
         data: {
           user: {
             id: firstUser.id,
-            username: 'rwieruch',
             email: 'hello@robin.com',
             role: 'ADMIN',
           },

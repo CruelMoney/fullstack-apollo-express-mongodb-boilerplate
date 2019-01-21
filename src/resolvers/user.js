@@ -3,10 +3,11 @@ import { combineResolvers } from 'graphql-resolvers';
 import { AuthenticationError, UserInputError } from 'apollo-server';
 
 import { isAdmin, isAuthenticated } from './authorization';
+import { languages } from '../constants';
 
 const createToken = async (user, secret, expiresIn) => {
-  const { id, email, username, role } = user;
-  return await jwt.sign({ id, email, username, role }, secret, {
+  const { id, email, role } = user;
+  return await jwt.sign({ id, email, role }, secret, {
     expiresIn,
   });
 };
@@ -31,14 +32,21 @@ export default {
   Mutation: {
     signUp: async (
       parent,
-      { username, email, password },
+      { email, password, language },
       { models, secret },
     ) => {
-      const user = await models.User.create({
-        username,
+      const user = new models.User({
         email,
         password,
       });
+      const settings = new models.UserSettings({
+        userId: user.id,
+        language: language || languages[0], // defaults to first language in constants
+      });
+      user.userSettings = settings.id;
+
+      await settings.save();
+      await user.save();
 
       return { token: createToken(user, secret, '30m') };
     },
@@ -67,19 +75,21 @@ export default {
 
     updateUser: combineResolvers(
       isAuthenticated,
-      async (parent, { username }, { models, me }) => {
-        return await models.User.findByIdAndUpdate(
-          me.id,
-          { username },
-          { new: true },
-        );
+      async (parent, { ...fields }, { models, me }) => {
+        if (fields.email !== me.email) {
+          throw new Error('Updating email not implemented yet.');
+        }
+
+        return await models.User.findByIdAndUpdate(me.id, fields, {
+          new: true,
+        });
       },
     ),
 
     deleteUser: combineResolvers(
       isAdmin,
       async (parent, { id }, { models }) => {
-        return await models.User.findOneAndDelete({_id: id}).then(
+        return await models.User.findOneAndDelete({ _id: id }).then(
           () => true,
         );
       },
@@ -87,8 +97,13 @@ export default {
   },
 
   User: {
-    messages: async (user, args, { models }) => {
-      return await models.Message.find({
+    // messages: async (user, args, { models }) => {
+    //   return await models.Message.find({
+    //     userId: user.id,
+    //   });
+    // },
+    userSettings: async (user, args, { models }) => {
+      return await models.UserSettings.find({
         userId: user.id,
       });
     },

@@ -7,8 +7,4 @@ const customScalarResolver = {
   Date: GraphQLDateTime,
 };
 
-export default [
-  customScalarResolver,
-  userResolvers,
-  messageResolvers,
-];
+export default [customScalarResolver, userResolvers];
