@@ -54,6 +54,7 @@ const server = new ApolloServer({
     };
   },
   context: async ({ req, connection }) => {
+    // Subscriptions
     if (connection) {
       return {
         models,
@@ -65,6 +66,7 @@ const server = new ApolloServer({
       };
     }
 
+    // Normal requests
     if (req) {
       const me = await getMe(req);
 

@@ -48,7 +48,8 @@ export default {
       await settings.save();
       await user.save();
 
-      return { token: createToken(user, secret, '30m') };
+      // no expiration
+      return { token: createToken(user, secret, null) };
     },
 
     signIn: async (

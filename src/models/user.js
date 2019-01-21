@@ -53,4 +53,11 @@ UserSchema.post('save', function(error, doc, next) {
   }
 });
 
+UserSchema.pre('remove', async function() {
+  // also delete settings
+  await this.model('UserSettings').findByIdAndDelete(
+    this.userSettings,
+  );
+});
+
 export default mongoose.model('User', UserSchema);
