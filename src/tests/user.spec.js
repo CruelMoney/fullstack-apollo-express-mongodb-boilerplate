@@ -8,7 +8,7 @@ let mongooseInstance;
 let users;
 before(async () => {
   mongooseInstance = await connectDb(
-    'mongodb://localhost:27017/mytestdatabase',
+    'mongodb://localhost:27017/babytest',
   );
   users = await getUsers();
 });

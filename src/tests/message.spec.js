@@ -5,9 +5,10 @@ import { getUsers } from '../testUtils/userTestUtils';
 import { connectDb } from '../models';
 let mongooseInstance;
 let token;
+let users;
 before(async () => {
   mongooseInstance = await connectDb(
-    'mongodb://localhost:27017/mytestdatabase',
+    'mongodb://localhost:27017/babytest',
   );
   users = await getUsers();
   const { data } = await api.signIn({
@@ -60,7 +61,7 @@ describe('Messages', () => {
             ],
           },
         },
-      }
+      };
       const { data } = await api.messagesInclUsers(undefined, token);
       expect(data).to.eql(expectedResult);
     });
