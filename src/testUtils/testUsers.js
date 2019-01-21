@@ -6,21 +6,31 @@ const users = [
     email: 'test1@test.com',
     password: 'test1',
     role: null,
+    emailVerified: true,
   }),
   new models.User({
     email: 'test2@test.com',
     password: 'test2',
     role: null,
+    emailVerified: true,
   }),
   new models.User({
     email: 'test3@test.com',
     password: 'test3',
     role: null,
+    emailVerified: true,
   }),
   new models.User({
     email: 'test4@test.com',
     password: 'test4',
     role: null,
+    emailVerified: true,
+  }),
+  new models.User({
+    email: 'admin@admin.com',
+    password: 'password',
+    role: 'ADMIN',
+    emailVerified: true,
   }),
 ];
 

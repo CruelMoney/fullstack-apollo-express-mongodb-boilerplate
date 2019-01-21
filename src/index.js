@@ -100,6 +100,7 @@ connectDb().then(async () => {
     await Promise.all([
       models.User.deleteMany({}),
       models.Message.deleteMany({}),
+      models.UserSettings.deleteMany({}),
     ]);
 
     createUsers();

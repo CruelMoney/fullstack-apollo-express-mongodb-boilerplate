@@ -17,7 +17,6 @@ export default {
         return await models.UserSettings.findByIdAndUpdate(
           me.id,
           options,
-          { new: true },
         );
       },
     ),
@@ -25,7 +24,8 @@ export default {
 
   UserSettings: {
     user: async (userSettings, args, { loaders }) => {
-      return await loaders.user.load(userSettings.userId);
+      const user = await loaders.user.load(userSettings.userId);
+      return user;
     },
   },
 };

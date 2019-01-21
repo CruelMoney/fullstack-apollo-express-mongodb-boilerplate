@@ -14,8 +14,14 @@ export default gql`
       language: String
     ): Token!
     signIn(login: String!, password: String!): Token!
-    updateUser(language: String, email: String): User!
+    updateUser(email: String): User!
     deleteUser(id: ID!): Boolean!
+    validateUserEmail(emailVerificationToken: String!): Boolean!
+    resetUserPassword(
+      passwordResetToken: String!
+      newPassword: String!
+    ): Boolean!
+    requestPasswordReset(email: String!): Boolean!
   }
 
   type Token {
@@ -27,5 +33,6 @@ export default gql`
     email: String!
     role: String
     userSettings: UserSettings!
+    emailVerified: Boolean!
   }
 `;

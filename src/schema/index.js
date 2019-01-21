@@ -15,7 +15,7 @@ const linkSchema = gql`
 
   type Query {
     _: Boolean
-    languages: AllowedLanguage
+    availableLanguages: [AllowedLanguage!]
   }
 
   type Mutation {

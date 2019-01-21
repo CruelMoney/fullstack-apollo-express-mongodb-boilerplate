@@ -1,6 +1,10 @@
 import jwt from 'jsonwebtoken';
 import { combineResolvers } from 'graphql-resolvers';
-import { AuthenticationError, UserInputError } from 'apollo-server';
+import {
+  AuthenticationError,
+  UserInputError,
+  ApolloError,
+} from 'apollo-server';
 
 import { isAdmin, isAuthenticated } from './authorization';
 import { languages } from '../constants';
@@ -14,9 +18,12 @@ const createToken = async (user, secret, expiresIn) => {
 
 export default {
   Query: {
-    users: async (parent, args, { models }) => {
-      return await models.User.find();
-    },
+    users: combineResolvers(
+      isAdmin,
+      async (parent, args, { models }) => {
+        return await models.User.find();
+      },
+    ),
     user: async (parent, { id }, { models }) => {
       return await models.User.findById(id);
     },
@@ -38,18 +45,21 @@ export default {
       const user = new models.User({
         email,
         password,
+        emailVerified: false,
+        role: null,
       });
+
+      // defaults to first language in constants
       const settings = new models.UserSettings({
         userId: user.id,
-        language: language || languages[0], // defaults to first language in constants
+        language: language || languages[0],
       });
       user.userSettings = settings.id;
 
       await settings.save();
       await user.save();
 
-      // no expiration
-      return { token: createToken(user, secret, null) };
+      return { token: createToken(user, secret, '1y') };
     },
 
     signIn: async (
@@ -61,29 +71,39 @@ export default {
 
       if (!user) {
         throw new UserInputError(
-          'No user found with this login credentials.',
+          'Ingen bruger fundet med givne initialer.',
         );
       }
 
       const isValid = await user.validatePassword(password);
 
       if (!isValid) {
-        throw new AuthenticationError('Invalid password.');
+        throw new AuthenticationError('Ugyldigt password.');
       }
 
-      return { token: createToken(user, secret, '30m') };
+      if (!user.emailVerified) {
+        throw new AuthenticationError('Email er ikke bekræftet.');
+      }
+
+      return { token: createToken(user, secret, '1y') };
     },
 
     updateUser: combineResolvers(
       isAuthenticated,
-      async (parent, { ...fields }, { models, me }) => {
-        if (fields.email !== me.email) {
-          throw new Error('Updating email not implemented yet.');
+      async (parent, { email, password }, { models, me }) => {
+        if (email && email !== me.email) {
+          throw new ApolloError(
+            'Updating email not implemented yet.',
+          );
         }
 
-        return await models.User.findByIdAndUpdate(me.id, fields, {
-          new: true,
-        });
+        return await models.User.findByIdAndUpdate(
+          me.id,
+          { email, password },
+          {
+            new: true,
+          },
+        );
       },
     ),
 
@@ -95,18 +115,55 @@ export default {
         );
       },
     ),
+
+    validateUserEmail: async (
+      parent,
+      { emailVerificationToken },
+      { models },
+    ) => {
+      const user = await models.user.findByToken(
+        emailVerificationToken,
+      );
+      if (!user) {
+        throw new AuthenticationError('User not found');
+      }
+      const valid = await user.validateEmailVerificationToken(
+        emailVerificationToken,
+      );
+      if (!valid) return false;
+
+      user.emailVerified = true;
+      await user.save();
+      return true;
+    },
+
+    resetUserPassword: async (
+      parent,
+      { passwordResetToken, newPassword },
+      { models },
+    ) => {
+      const user = await models.user.findByToken(passwordResetToken);
+      if (!user) {
+        throw new AuthenticationError('User not found');
+      }
+      const valid = await user.validatePasswordResetToken(
+        passwordResetToken,
+      );
+      if (!valid) return false;
+
+      user.password = newPassword;
+      await user.save();
+
+      return true;
+    },
   },
 
   User: {
-    // messages: async (user, args, { models }) => {
-    //   return await models.Message.find({
-    //     userId: user.id,
-    //   });
-    // },
     userSettings: async (user, args, { models }) => {
-      return await models.UserSettings.find({
+      const settings = await models.UserSettings.findOne({
         userId: user.id,
       });
+      return settings;
     },
   },
 };

@@ -6,12 +6,12 @@ export default gql`
   }
 
   extend type Mutation {
-    updateUserSettings(language: String!): UserSettings!
+    updateUserSettings(language: AllowedLanguage!): UserSettings!
   }
 
   type UserSettings {
     id: ID!
-    language: String!
+    language: AllowedLanguage!
     user: User!
   }
 `;
