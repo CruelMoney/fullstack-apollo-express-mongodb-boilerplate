@@ -21,9 +21,9 @@ const connectDb = dbUrl => {
       { useNewUrlParser: true },
     );
   }
-  if (process.env.DATABASE_URL) {
+  if (process.env.MONGO_URL) {
     return mongoose.connect(
-      process.env.DATABASE_URL,
+      process.env.MONGO_URL,
       { useNewUrlParser: true },
     );
   }
